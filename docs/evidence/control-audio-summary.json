@@ -1,0 +1,46 @@
+{
+  "events_file": "http-events.tsv",
+  "frame_events": 180,
+  "first_frame_seconds": 3.441,
+  "last_frame_seconds": 15.415,
+  "last_frame_index": 179,
+  "maximum_buffered_frames": 4,
+  "bytes_read": 311868,
+  "maximum_lua_kib": 152.1,
+  "flashes_seconds": [
+    3.441,
+    4.532,
+    5.525,
+    6.517,
+    7.543,
+    8.502,
+    9.528,
+    10.52,
+    11.512,
+    12.537,
+    13.53,
+    14.522
+  ],
+  "transport_events": [
+    {
+      "seconds": "3.441",
+      "event": "audio_started",
+      "frame": "0",
+      "buffered": "3",
+      "bytes": "6786",
+      "lua_kib": "143.0",
+      "detail": ""
+    },
+    {
+      "seconds": "15.150",
+      "event": "connection_closed",
+      "frame": "175",
+      "buffered": "4",
+      "bytes": "311868",
+      "lua_kib": "142.3",
+      "detail": ""
+    }
+  ],
+  "beeps_seconds": [],
+  "audio_note": "pulse counts differ; do not infer synchronization"
+}

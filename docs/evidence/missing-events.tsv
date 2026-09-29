@@ -1,0 +1,11 @@
+seconds	event	frame	buffered	bytes	lua_kib	detail
+0.002	audio_channel	-1	0	0	151.6	true
+0.002	opened	-1	0	0	151.8	http
+0.002	status	-1	0	0	152.0	waiting
+1.027	status	-1	0	0	143.1	waiting
+2.020	status	-1	0	0	143.1	waiting
+3.013	status	-1	0	0	143.1	waiting
+3.079	headers	-1	0	0	142.6	404
+3.079	error	-1	0	0	142.8	HTTP 404
+3.079	connection_closed	-1	0	0	142.2	
+8.008	finished	-1	0	0	141.9	

@@ -1,0 +1,24 @@
+copying path '/nix/store/knwgd7sflxbq3prizgzr5m6y9z7lcgzf-ffmpeg-9.0.1' from 'https://cache.nixos.org'...
+copying path '/nix/store/pwli6ndij87np2wm89lvhjjc9cas6im8-ffmpeg-9.0.1-dev' from 'https://cache.nixos.org'...
+building '/nix/store/fikbiiwy7bwzl5p4qfm3miz1kdkf4d7y-nix-shell-env.drv'...
+python3 tools/make_fixture.py build/diagnostic.mkv
+python3 tools/encode.py build/diagnostic.mkv build/diagnostic.pds
+{'video_frames': 180, 'audio_frames': 461, 'fps': 15}
+mkdir -p build/source
+cp probe/*.lua probe/pdxinfo build/source/
+cp build/diagnostic.pds build/source/fixture.pds
+/nix/store/xnlc6fvjvnvh9q4qw4j5byxsw74s3vk4-playdate-sdk-3.1.1/share/playdate-sdk/bin/pdc -sdkpath "/nix/store/xnlc6fvjvnvh9q4qw4j5byxsw74s3vk4-playdate-sdk-3.1.1/share/playdate-sdk" build/source build/PDSProbe.pdx
+Unrecognized file types are copied by default. Use the -k or --skip-unknown flag to skip these files instead.
+Copying fixture.pds
+python3 -m unittest discover -s tests -v
+test_actual_ffmpeg_conversion_and_audio_decoding (test_stream.EncoderTests.test_actual_ffmpeg_conversion_and_audio_decoding) ... ok
+test_failed_conversion_preserves_existing_output (test_stream.EncoderTests.test_failed_conversion_preserves_existing_output) ... ok
+test_first_packet_arrives_before_conversion_finishes (test_stream.EncoderTests.test_first_packet_arrives_before_conversion_finishes) ... ok
+test_invalid_or_incomplete_input_is_rejected (test_stream.PacketTests.test_invalid_or_incomplete_input_is_rejected) ... ok
+test_key_and_xor_frames_reconstruct_pixels (test_stream.PacketTests.test_key_and_xor_frames_reconstruct_pixels) ... ok
+test_mp3_frame_padding_and_profile (test_stream.PacketTests.test_mp3_frame_padding_and_profile) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 6.129s
+
+OK

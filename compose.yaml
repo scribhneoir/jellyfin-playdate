@@ -1,0 +1,30 @@
+services:
+  bridge:
+    build: .
+    init: true
+    ports:
+      - "${BRIDGE_BIND_ADDRESS:-127.0.0.1}:8000:8000"
+    env_file:
+      - path: .env
+        format: raw
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  pds-probe:
+    profiles: ["probe"]
+    build: .
+    entrypoint: ["python", "-u", "tools/serve.py"]
+    command: ["/media/diagnostic.mkv", "--host", "0.0.0.0", "--realtime"]
+    ports:
+      - "${PDS_BIND_ADDRESS:-127.0.0.1}:8001:8000"
+    volumes:
+      - ./build/diagnostic.mkv:/media/diagnostic.mkv:ro
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m

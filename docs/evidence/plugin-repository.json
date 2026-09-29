@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "jellyfin": "10.11.11",
+  "version": "0.3.0.0",
+  "catalog": true,
+  "download_and_install": true,
+  "active_after_restart": true,
+  "plugin_api": true,
+  "zip_md5": "e7950f00c5643e595cca7dd83842f14b"
+}

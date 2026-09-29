@@ -1,0 +1,24 @@
+ Container jellyfin-pds-bridge-run-e41eeed784e9 Creating 
+ Container jellyfin-pds-bridge-run-e41eeed784e9 Created 
+test_abandoned_session_expires_without_claiming_playback (test_bridge.BridgeTests.test_abandoned_session_expires_without_claiming_playback) ... ok
+test_actual_jellyfin_http_source_becomes_progressive_native_stream (test_bridge.BridgeTests.test_actual_jellyfin_http_source_becomes_progressive_native_stream) ... {"event": "conversion_finished", "state": "complete", "bytes": 75249}
+ok
+test_authentication_and_library_metadata (test_bridge.BridgeTests.test_authentication_and_library_metadata) ... ok
+test_cancel_stops_encoder_and_releases_single_stream_slot (test_bridge.BridgeTests.test_cancel_stops_encoder_and_releases_single_stream_slot) ... {"event": "conversion_finished", "state": "stopped", "bytes": 1875}
+ok
+test_expired_user_token_is_renewed_once (test_bridge.BridgeTests.test_expired_user_token_is_renewed_once) ... ok
+test_seek_reencodes_from_requested_position_and_reports_actual_progress (test_bridge.BridgeTests.test_seek_reencodes_from_requested_position_and_reports_actual_progress) ... {"event": "conversion_finished", "state": "complete", "bytes": 51070}
+ok
+test_validation_and_no_arbitrary_source_proxy (test_bridge.BridgeTests.test_validation_and_no_arbitrary_source_proxy) ... ok
+test_actual_ffmpeg_conversion_and_audio_decoding (test_stream.EncoderTests.test_actual_ffmpeg_conversion_and_audio_decoding) ... ok
+test_failed_conversion_preserves_existing_output (test_stream.EncoderTests.test_failed_conversion_preserves_existing_output) ... ok
+test_first_packet_arrives_before_conversion_finishes (test_stream.EncoderTests.test_first_packet_arrives_before_conversion_finishes) ... ok
+test_silent_source_gets_a_finite_native_audio_clock (test_stream.EncoderTests.test_silent_source_gets_a_finite_native_audio_clock) ... ok
+test_invalid_or_incomplete_input_is_rejected (test_stream.PacketTests.test_invalid_or_incomplete_input_is_rejected) ... ok
+test_key_and_xor_frames_reconstruct_pixels (test_stream.PacketTests.test_key_and_xor_frames_reconstruct_pixels) ... ok
+test_mp3_frame_padding_and_profile (test_stream.PacketTests.test_mp3_frame_padding_and_profile) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 13.137s
+
+OK

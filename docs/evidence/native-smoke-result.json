@@ -1,0 +1,78 @@
+{
+  "ok": true,
+  "message": "Native play, pause, resume, seek, and stop passed",
+  "transitions": [
+    {
+      "milliseconds": 1,
+      "state": "loading",
+      "phase": "initial",
+      "position": 0
+    },
+    {
+      "milliseconds": 4798,
+      "state": "buffering",
+      "phase": "initial",
+      "position": 0
+    },
+    {
+      "milliseconds": 4897,
+      "state": "playing",
+      "phase": "initial",
+      "position": 0.066666670143604
+    },
+    {
+      "milliseconds": 5261,
+      "state": "pausing",
+      "phase": "pause",
+      "position": 0.40000000596046
+    },
+    {
+      "milliseconds": 5327,
+      "state": "paused",
+      "phase": "pause",
+      "position": 0.40000000596046
+    },
+    {
+      "milliseconds": 5360,
+      "state": "loading",
+      "phase": "resume",
+      "position": 0.40000000596046
+    },
+    {
+      "milliseconds": 11941,
+      "state": "buffering",
+      "phase": "resume",
+      "position": 0.40000000596046
+    },
+    {
+      "milliseconds": 12041,
+      "state": "playing",
+      "phase": "resume",
+      "position": 0.46666666865349
+    },
+    {
+      "milliseconds": 12404,
+      "state": "seeking",
+      "phase": "seek",
+      "position": 0.80000001192093
+    },
+    {
+      "milliseconds": 12570,
+      "state": "loading",
+      "phase": "seek",
+      "position": 1.7999999523163
+    },
+    {
+      "milliseconds": 13463,
+      "state": "playing",
+      "phase": "seek",
+      "position": 1.7999999523163
+    },
+    {
+      "milliseconds": 13695,
+      "state": "idle",
+      "phase": "stop",
+      "position": 2
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+[
+  {
+    "guid": "9a601fa6-3a03-49d3-a64e-2be2c824c3ad",
+    "name": "Playdate",
+    "description": "Native PDS video streaming and PDI posters for Playdate.",
+    "overview": "Stream your library directly to Playdate.",
+    "owner": "scribhneoir",
+    "category": "General",
+    "versions": [
+      {
+        "version": "0.3.0.0",
+        "targetAbi": "10.11.11.0",
+        "sourceUrl": "https://github.com/scribhneoir/jellyfin-playdate/releases/download/v0.3.0/Jellyfin.Plugin.Playdate-0.3.0.zip",
+        "checksum": "e7950f00c5643e595cca7dd83842f14b",
+        "timestamp": "2026-09-29T21:28:14Z",
+        "changelog": "Native PDS streaming, playback progress, and cached PDI posters."
+      }
+    ]
+  }
+]

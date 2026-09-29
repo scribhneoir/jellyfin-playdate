@@ -1,0 +1,98 @@
+{
+  "bytes": 303072,
+  "finalFrame": 179,
+  "ok": true,
+  "message": "Native PDI pixels/cache, video pixels, play, pause, resume, seek, stop, and complete segmented playback passed",
+  "transitions": [
+    {
+      "state": "idle",
+      "phase": "metadata",
+      "position": 0
+    },
+    {
+      "state": "loading",
+      "phase": "initial",
+      "position": 0
+    },
+    {
+      "state": "buffering",
+      "phase": "initial",
+      "position": 0
+    },
+    {
+      "state": "playing",
+      "phase": "initial",
+      "position": 0.066666670143604
+    },
+    {
+      "state": "pausing",
+      "phase": "pause",
+      "position": 0.40000000596046
+    },
+    {
+      "state": "paused",
+      "phase": "pause",
+      "position": 0.40000000596046
+    },
+    {
+      "state": "loading",
+      "phase": "resume",
+      "position": 0.40000000596046
+    },
+    {
+      "state": "buffering",
+      "phase": "resume",
+      "position": 0.40000000596046
+    },
+    {
+      "state": "playing",
+      "phase": "resume",
+      "position": 0.46666666865349
+    },
+    {
+      "state": "seeking",
+      "phase": "seek",
+      "position": 0.80000001192093
+    },
+    {
+      "state": "loading",
+      "phase": "seek",
+      "position": 1.7999999523163
+    },
+    {
+      "state": "buffering",
+      "phase": "seek",
+      "position": 1.7999999523163
+    },
+    {
+      "state": "playing",
+      "phase": "seek",
+      "position": 1.866666674614
+    },
+    {
+      "state": "idle",
+      "phase": "stop",
+      "position": 2
+    },
+    {
+      "state": "loading",
+      "phase": "full",
+      "position": 0
+    },
+    {
+      "state": "buffering",
+      "phase": "full",
+      "position": 0
+    },
+    {
+      "state": "playing",
+      "phase": "full",
+      "position": 0.066666670143604
+    },
+    {
+      "state": "ended",
+      "phase": "full",
+      "position": 11.933333396912
+    }
+  ]
+}

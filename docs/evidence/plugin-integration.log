@@ -1,0 +1,14 @@
+test_authentication_and_metadata (__main__.PluginTests.test_authentication_and_metadata) ... ok
+test_cancel_releases_encoder_and_session_ownership (__main__.PluginTests.test_cancel_releases_encoder_and_session_ownership) ... ok
+test_library_and_transcode_permissions (__main__.PluginTests.test_library_and_transcode_permissions) ... ok
+test_pagination_and_silent_video (__main__.PluginTests.test_pagination_and_silent_video) ... ok
+test_pdi_poster_matches_sdk_fixture (__main__.PluginTests.test_pdi_poster_matches_sdk_fixture) ... ok
+test_progressive_stream_seek_and_progress (__main__.PluginTests.test_progressive_stream_seek_and_progress) ... ok
+test_segment_cancellation_releases_encoder (__main__.PluginTests.test_segment_cancellation_releases_encoder) ... ok
+test_segments_preserve_stream_and_have_exact_lengths (__main__.PluginTests.test_segments_preserve_stream_and_have_exact_lengths) ... ok
+test_unconsumed_session_expires_without_watch_progress (__main__.PluginTests.test_unconsumed_session_expires_without_watch_progress) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 81.888s
+
+OK

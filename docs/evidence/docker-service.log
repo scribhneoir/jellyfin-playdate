@@ -1,0 +1,4 @@
+pds-probe-1  | {"event": "listening", "host": "0.0.0.0", "port": 8000}
+pds-probe-1  | 172.21.0.1 - - [29/Sep/2026 19:03:01] "GET /stream.pds HTTP/1.1" 200 -
+pds-probe-1  | {"event": "first_byte", "seconds": 0.18987298899810412}
+pds-probe-1  | {"event": "complete", "bytes": 311868, "seconds": 12.063685308999993, "video_frames": 180, "audio_frames": 461, "fps": 15}

@@ -1,0 +1,6 @@
+name=PDS Probe
+author=Independent streaming experiment
+bundleID=local.jellyfin-pds.probe
+version=0.1.0
+buildNumber=1
+description=Native PDS streaming feasibility probe

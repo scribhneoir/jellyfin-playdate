@@ -1,0 +1,10 @@
+{
+  "first_packet_seconds": 0.034,
+  "seek_video_frames": 60,
+  "audio_frames": 155,
+  "stream_bytes": 100975,
+  "saved_position": 9.5,
+  "first_segment_seconds": 1.664,
+  "segments": 5,
+  "segmented_bytes": 100975
+}

@@ -1,0 +1,12 @@
+build/
+.direnv/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+client/local_config.lua
+plugin/bin/
+plugin/obj/
+client/fonts/*.fnt
+client/fonts/*.png
