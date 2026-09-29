@@ -1,6 +1,6 @@
 name=Jellyfin
 author=scribhneoir
 bundleID=com.scribhneoir.jellyfin-playdate
-version=0.3.0
-buildNumber=3
+version=0.3.1
+buildNumber=4
 description=Browse Jellyfin with native PDI posters and PDS video streaming

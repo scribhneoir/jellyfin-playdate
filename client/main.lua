@@ -106,24 +106,26 @@ local function itemLabel(item)
     return item.name
 end
 
-loadList = function(query, title, start, remember)
+loadList = function(query, title, start, remember, folder)
     if remember then stack[#stack+1] = screen end
     navigation = navigation + 1
     local generation = navigation
     screen = {kind='loading', title=title, message='Loading...'}
     Net.request('GET', '/api/items?'..query..'&start='..start, nil, function(data, err)
         if generation ~= navigation then return end
-        if err then errorScreen(err, function() loadList(query, title, start, false) end); return end
+        if err then errorScreen(err, function() loadList(query, title, start, false, folder) end); return end
         local rows = {}
         for _, item in ipairs(data.items) do
             local entry = item
             rows[#rows+1] = {label=itemLabel(entry), item=entry, action=function()
-                if entry.folder then loadList('parent='..entry.id, entry.name, 0, true)
+                if entry.folder then loadList('parent='..entry.id, entry.name, 0, true, entry)
                 else detail(entry, true) end
             end}
         end
         screen = {kind='list', title=title, selected=1, rows=rows,
-            subtitle=data.total..' titles', query=query, start=start, total=data.total}
+            subtitle=data.total..' titles', query=query, start=start, total=data.total, folder=folder}
+        local list = screen
+        if folder then Posters.load(folder, function(image) list.poster = image end) end
         log('list: '..#rows..' items, offset '..start)
     end)
 end
@@ -223,8 +225,8 @@ function pd.update()
         crankRemainder=crankRemainder-ticks*direction*15
     end
     if screen.query then
-        if pd.buttonJustPressed(pd.kButtonLeft) and screen.start > 0 then loadList(screen.query, screen.title, math.max(0, screen.start-20), false)
-        elseif pd.buttonJustPressed(pd.kButtonRight) and screen.start+20 < screen.total then loadList(screen.query, screen.title, screen.start+20, false) end
+        if pd.buttonJustPressed(pd.kButtonLeft) and screen.start > 0 then loadList(screen.query, screen.title, math.max(0, screen.start-20), false, screen.folder)
+        elseif pd.buttonJustPressed(pd.kButtonRight) and screen.start+20 < screen.total then loadList(screen.query, screen.title, screen.start+20, false, screen.folder) end
     end
     if pd.buttonJustPressed(pd.kButtonA) then
         if screen.kind == 'error' and screen.retry then screen.retry()

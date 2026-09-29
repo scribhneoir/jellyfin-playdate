@@ -114,7 +114,7 @@ local function rows(screen, top, rowHeight, visible, left)
         local centerY = y+(rowHeight-3)//2
         gfx.setColor(gfx.kColorBlack)
         if selected then gfx.fillRoundRect(left, y, width, rowHeight-2, 5) end
-        local note = row.note or (row.item and metadata(row.item, true))
+        local note = row.note or (row.item and metadata(row.item, not screen.folder))
         local symbol = row.icon or (row.item and (row.item.folder and 'library' or 'play')) or 'settings'
         icon(symbol, left+9, centerY-8, selected)
         text(row.label, left+36, note and y+2 or centerY-8, width-72, 22, selected and bold or body, selected)
@@ -142,6 +142,18 @@ local function waiting(y, now)
     end
 end
 
+local function poster(image, x, y)
+    if image then image:draw(x, y); return end
+    gfx.setColor(gfx.kColorBlack)
+    gfx.drawRoundRect(x, y, 96, 144, 4)
+    gfx.drawRect(x+26, y+52, 44, 36)
+    gfx.drawCircleAtPoint(x+38, y+62, 4)
+    gfx.drawLine(x+28, y+85, x+43, y+70)
+    gfx.drawLine(x+43, y+70, x+52, y+79)
+    gfx.drawLine(x+52, y+79, x+61, y+68)
+    gfx.drawLine(x+61, y+68, x+68, y+76)
+end
+
 function UI.browser(screen)
     if screen.kind == 'list' then
         if screen.home then
@@ -155,15 +167,19 @@ function UI.browser(screen)
             local count = screen.query and screen.total > 0 and
                 string.format('%d / %d', (screen.start or 0)+screen.selected, screen.total) or nil
             header(screen.title, screen.subtitle, count)
+            local hasPoster = screen.folder ~= nil or screen.poster ~= nil
+            local left = hasPoster and 120 or 12
+            local width = 388-left
+            if hasPoster then poster(screen.poster, 12, 52) end
             if #screen.rows == 0 then
-                icon('search', 191, 87)
+                icon('search', left+(width-18)//2, 87)
                 local search = screen.query and screen.query:match('^search=')
                 local resume = screen.query == 'view=resume'
                 text(search and 'No matches' or resume and 'Nothing to resume' or 'No videos',
-                    20, 119, 360, 26, bold, false, kTextAlignment.center)
+                    left+8, 119, width-16, 26, bold, false, kTextAlignment.center)
                 text(search and 'Try another title.' or resume and 'Start a video to resume it here.' or 'Try another library.',
-                    20, 151, 360, 28, small, false, kTextAlignment.center)
-            else rows(screen, 50, 38, 4) end
+                    left+8, 151, width-16, 28, small, false, kTextAlignment.center)
+            else rows(screen, 50, 38, 4, left) end
             local hint = screen.query and screen.total > 20 and
                 string.format('< %d/%d > pages', screen.start//20+1, math.ceil(screen.total/20)) or 'D-pad / crank: scroll'
             footer(#screen.rows > 0 and 'Open' or nil, 'Back', #screen.rows > 0 and hint or nil)
@@ -171,8 +187,8 @@ function UI.browser(screen)
     elseif screen.kind == 'detail' then
         gfx.clear(gfx.kColorWhite)
         local item = screen.item
-        local left = screen.poster and 120 or 12
-        if screen.poster then screen.poster:draw(12, 8) end
+        local left = 120
+        poster(screen.poster, 12, 8)
         local _, titleHeight = gfx.getTextSizeForMaxWidth(screen.title, 388-left, 0, heading)
         titleHeight = math.min(64, titleHeight)
         text(screen.title, left, 7, 388-left, titleHeight, heading)

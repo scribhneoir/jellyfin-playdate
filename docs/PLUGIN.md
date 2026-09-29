@@ -15,7 +15,7 @@ https://raw.githubusercontent.com/scribhneoir/jellyfin-playdate/main/manifest.js
 ```
 
 Install **Playdate** from the Catalog and restart Jellyfin. The
-[release](https://github.com/scribhneoir/jellyfin-playdate/releases/tag/v0.3.0)
+[latest client release](https://github.com/scribhneoir/jellyfin-playdate/releases/latest)
 includes the unconfigured client in `Jellyfin-Plugin.zip`.
 
 ### Publishing a repository
@@ -179,7 +179,11 @@ is 1,760 bytes. The server keeps at most 256 converted images in memory, with
 cache keys based on source path, size, modification time, and encoder revision.
 Authorization is checked before cache access. The Playdate keeps at most 64
 files, invalidates changed artwork by revision, and clears cached art when the
-connection/account changes. Missing art leaves the text layout usable.
+connection/account changes. Client 0.3.1 shows the show's poster beside its seasons
+and the season's poster beside its episodes. Show, season, and title details
+reserve a fixed poster area: a placeholder remains while loading or when art is
+unavailable, so text and controls keep their positions. This client update works
+with plugin 0.3.0.
 
 ## Isolated test setup
 

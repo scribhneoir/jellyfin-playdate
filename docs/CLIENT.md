@@ -10,7 +10,11 @@ Jellyfin user token used in plugin mode.
 The client uses a native one-bit interface with the server name in its masthead,
 bitmap headings, inverted selection rows, and drawn icons. Library rows show
 runtime and watch progress, with a scrollbar and explicit page/selection counts.
-Details give titles up to two lines; long text is ellipsized. Playback controls
+Show and season screens display their poster beside the child list. These screens
+and title details reserve a 96×144 poster area from the first frame, with a
+placeholder while artwork is loading or unavailable. Paging, retry, and back
+navigation retain the parent context. Details give titles up to two lines; long
+text is ellipsized. Playback controls
 sit over the video, retaining its last frame through pause, seek, and buffering.
 The title and right-aligned status share one header line; controls fade after
 three seconds of playback. Text is rendered literally, including underscores and asterisks
@@ -29,7 +33,8 @@ in-memory network/player fixtures, writes 400×240 screenshots to
 `build/design-preview/`, and exits. The target checks the pass marker in
 `build/design-preview.log`. It covers crank scrolling, both paging directions,
 empty lists, details, resume/seek controls, back navigation, and retry. This is
-an interface check; streaming itself is covered by the separate native playback
+an interface check; it also tests delayed show/season artwork and compares every
+pixel outside the poster slot before and after loading. Streaming itself is covered by the separate native playback
 test below. It does not read `.env` or contact the configured Jellyfin server.
 
 ## Companion architecture

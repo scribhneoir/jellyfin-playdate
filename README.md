@@ -17,7 +17,7 @@ https://raw.githubusercontent.com/scribhneoir/jellyfin-playdate/main/manifest.js
 ```
 
 Install **Playdate** from the Catalog, then restart Jellyfin. The
-[v0.3.0 release](https://github.com/scribhneoir/jellyfin-playdate/releases/tag/v0.3.0)
+[latest client release](https://github.com/scribhneoir/jellyfin-playdate/releases/latest)
 also includes an unconfigured Playdate client ZIP. See
 [connection setup](docs/PLUGIN.md#connect-the-client) to connect it to your account.
 
@@ -49,7 +49,8 @@ Jellyfin or Panic application.
 - Stream 400×240 one-bit video at 15 fps, with mono MP3 audio.
 - Pause/resume, seek with the crank or D-pad, and save playback position.
 - Keep encoding and buffering incremental; stop FFmpeg when playback stops.
-- Download and cache 96×144 native `.pdi` posters on title details (plugin mode).
+- Download and cache 96×144 native `.pdi` posters on show, season, and title
+  screens (plugin mode), with fixed placeholders while artwork loads.
 - Renew a Jellyfin login when its token expires (bridge mode).
 
 The bridge supports one configured account and one conversion at a time. It
