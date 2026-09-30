@@ -94,4 +94,23 @@ Evidence: [14 unit checks](evidence/client-0.4-unit.log),
 Final native playback and hardware validation were deferred at the user's request
 to ship the candidate promptly. The 0.4.0 hardware fix is not yet confirmed.
 
+## Version 0.4.0 hardware result and 0.4.1 candidate
+
+Hardware playback reached frame 238 (15.87 seconds), then stalled. Segment zero
+was fully consumed (192,658 bytes). Segment one advertised another 153,509 bytes,
+but the cumulative native byte counter stopped at 345,686 rather than 346,167.
+There were no bytes available and no overlapping control request. The client
+never requested segment two because it was still waiting for those 481 bytes.
+This identifies the blocked client condition; it does not establish why the
+native connection stopped delivering/counting bytes.
+
+[Device evidence](evidence/device-0.4-stall.json) records the request/header events
+and final watchdog failure without media IDs or credentials.
+
+Client 0.4.1 closes the connection after each fully consumed segment and requests
+`Connection: close`, resetting HTTP/TCP state before the next segment. It keeps
+eight-second segments, the same native player, and progress in segment requests.
+Plugin 0.4.0 remains compatible. This is a candidate change: client compilation
+and package checks were performed, but its hardware playback is not yet verified.
+
 See [installation and API details](PLUGIN.md).

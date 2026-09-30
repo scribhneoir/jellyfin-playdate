@@ -119,9 +119,7 @@ local function getPart()
     if Player.started and Player.session.progressInParts then
         path = path..'?position='..Net.escape(Player.time())
     end
-    local headers = Net.headers()
-    headers.Connection = 'keep-alive'
-    local ok, err = Player.connection:get(path, headers)
+    local ok, err = Player.connection:get(path, Net.headers())
     assert(ok, err)
     trace('request')
 end
@@ -140,7 +138,6 @@ local function connect(session)
     assert(type(maxBytes) == 'number' and maxBytes > 0 and maxBytes <= 2097152 and maxBytes % 1 == 0,
         'Invalid video segment limit')
     Player.connection = Net.connection()
-    if Player.parts then Player.connection:setKeepAlive(true) end
     Player.connection:setHeadersReadCallback(function()
         local status = Player.connection:getResponseStatus()
         if status ~= 200 then Player.pendingError = 'Cannot start video (HTTP '..tostring(status)..')'; return end
@@ -226,12 +223,14 @@ function Player.update()
         if parts then
             -- The decoder can finish a response before Lua's completion callback.
             -- Wait until the decoder has consumed the body before the next GET.
-            -- Keep the HTTP connection alive between segments.
+            -- Reset HTTP/TCP state between responses. Reusing a live connection
+            -- on hardware can leave the decoder short of the next body's length.
             if parts.expected and Player.stream:getBytesRead() >= parts.expected then
                 assert(Player.stream:getBytesRead() == parts.expected, 'Video segment length mismatch')
                 trace('consumed')
                 parts.expected=nil
-                if parts.final then Player.connection:close(); Player.closed=true
+                Player.connection:close()
+                if parts.final then Player.closed=true
                 else parts.nextAt=pd.getCurrentTimeMilliseconds()+50 end
             end
             if parts.nextAt and pd.getCurrentTimeMilliseconds() >= parts.nextAt then

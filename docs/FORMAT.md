@@ -122,8 +122,8 @@ clients retain one-second segments capped at 65,536 bytes. The last response
 has `X-Pds-Final: 1`.
 The native player and audio clock persist across segment requests. The client
 uses native consumed-byte counts to decide when to request another segment,
-preserves the connection where supported, and defers reuse for 50 ms to avoid
-callback races. Progress is included in the next segment request.
+closes the connection between responses (client 0.4.1), and defers reuse for
+50 ms to avoid callback races. Progress is included in the next segment request.
 The ordinary continuous `.pds` endpoint remains available for HTTP clients
 that handle chunked encoding. See [PLUGIN.md](PLUGIN.md) for the API and tests.
 
