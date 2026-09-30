@@ -114,13 +114,16 @@ that a second load uses the on-device cache.
 
 ## PDS over HTTP in plugin mode
 
-The native SDK 3.1.1 player does not correctly decode HTTP chunk framing.
+Native player tests with SDKs 3.1.1 and 3.1.2 failed to decode HTTP chunk framing.
 The plugin therefore exposes numbered responses with `Content-Length`, carrying
 whole PDS packets. This changes transport boundaries, not PDS bytes or the codec
-profile. Each segment is at most 65,536 bytes; the last has `X-Pds-Final: 1`.
+profile. Client 0.4.0 negotiates eight-second segments capped at 2 MiB; legacy
+clients retain one-second segments capped at 65,536 bytes. The last response
+has `X-Pds-Final: 1`.
 The native player and audio clock persist across segment requests. The client
 uses native consumed-byte counts to decide when to request another segment,
-closes the previous request, and defers reuse for 50 ms to avoid callback races.
+preserves the connection where supported, and defers reuse for 50 ms to avoid
+callback races. Progress is included in the next segment request.
 The ordinary continuous `.pds` endpoint remains available for HTTP clients
 that handle chunked encoding. See [PLUGIN.md](PLUGIN.md) for the API and tests.
 

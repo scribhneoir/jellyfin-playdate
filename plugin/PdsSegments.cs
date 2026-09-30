@@ -8,11 +8,21 @@ public sealed record PdsPart(byte[] Data, bool Final);
 // PDS stream. Keep whole packets and bound both segment size and queued memory.
 public sealed class PdsSegments : Stream
 {
+    private readonly int framesPerSegment;
+    private readonly int maxBytes;
     private readonly Channel<PdsPart> queue = Channel.CreateBounded<PdsPart>(2);
     private readonly MemoryStream buffer = new();
     private int frames;
     private byte[]? pending;
     public ChannelReader<PdsPart> Reader => queue.Reader;
+
+    public PdsSegments(int framesPerSegment = PdsEncoder.Fps, int maxBytes = 65536)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(framesPerSegment, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxBytes, 16384);
+        this.framesPerSegment = framesPerSegment;
+        this.maxBytes = maxBytes;
+    }
 
     private async Task Emit(CancellationToken token)
     {
@@ -26,10 +36,10 @@ public sealed class PdsSegments : Stream
 
     public override async ValueTask WriteAsync(ReadOnlyMemory<byte> packet, CancellationToken token = default)
     {
-        if (packet.Length > 65536) throw new IOException("PDS packet exceeds segment limit");
-        if (buffer.Length + packet.Length > 65536) await Emit(token);
+        if (packet.Length > maxBytes) throw new IOException("PDS packet exceeds segment limit");
+        if (buffer.Length + packet.Length > maxBytes) await Emit(token);
         buffer.Write(packet.Span);
-        if (packet.Span[1] is 0xc1 or 0xc2 && ++frames == PdsEncoder.Fps) await Emit(token);
+        if (packet.Span[1] is 0xc1 or 0xc2 && ++frames == framesPerSegment) await Emit(token);
     }
 
     public async Task Finish(CancellationToken token)

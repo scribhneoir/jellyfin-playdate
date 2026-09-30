@@ -20,11 +20,15 @@ AUTH = 'MediaBrowser Client="Playdate Test", Device="Simulator", DeviceId="pds-p
 
 
 def prepare():
-    for directory in ('config/plugins/Playdate', 'cache', 'media/Diagnostic', 'media/Silent'):
+    for directory in ('config/plugins/Playdate', 'cache', 'media/Diagnostic', 'media/BufferedDiagnostic', 'media/Silent'):
         (TEST / directory).mkdir(parents=True, exist_ok=True)
     video = TEST / 'media/Diagnostic/Diagnostic.mkv'
     if not video.exists():
         subprocess.run([sys.executable, str(ROOT/'tools/make_fixture.py'), str(video)], check=True)
+    buffered = TEST / 'media/BufferedDiagnostic/BufferedDiagnostic.mkv'
+    if not buffered.exists():
+        subprocess.run(['ffmpeg','-nostdin','-v','error','-stream_loop','2','-i',str(video),
+                        '-t','32','-c','copy',str(buffered)],check=True)
     silent = TEST / 'media/Silent/Silent.mkv'
     if not silent.exists():
         subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-i', str(video), '-t', '3',
@@ -40,6 +44,7 @@ def prepare():
     png = (b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>2I5B', 96, 144, 8, 0, 0, 0, 0)) +
            chunk(b'IDAT', zlib.compress(raw)) + chunk(b'IEND', b''))
     (TEST/'media/Diagnostic/poster.png').write_bytes(png)
+    (TEST/'media/BufferedDiagnostic/poster.png').write_bytes(png)
     print('Prepared original diagnostic video, silent video, pagination fixtures, and poster.')
 
 

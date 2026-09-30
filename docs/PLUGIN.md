@@ -1,6 +1,6 @@
 # Jellyfin Playdate plugin
 
-Version 0.3.0 targets **Jellyfin 10.11.11 / .NET 9**. It is an independently
+Version 0.4.0 targets **Jellyfin 10.11.11 / .NET 9**. It is an independently
 implemented C# plugin: Python, a separate HTTP service, and the Playdate SDK are
 not required on the Jellyfin server. The server's FFmpeg needs `libmp3lame`.
 
@@ -16,7 +16,8 @@ https://raw.githubusercontent.com/scribhneoir/jellyfin-playdate/main/manifest.js
 
 Install **Playdate** from the Catalog and restart Jellyfin. The
 [latest client release](https://github.com/scribhneoir/jellyfin-playdate/releases/latest)
-includes the unconfigured client in `Jellyfin-Plugin.zip`.
+includes the unconfigured client in `Jellyfin-Plugin.zip`. Client 0.4.0 requires
+plugin 0.4.0 or newer; upgrade both and restart Jellyfin before playback.
 
 ### Publishing a repository
 
@@ -40,7 +41,7 @@ ordinary static file hosting, required for installation and updates only.
 GitHub also works: host `manifest.json` on a public branch or GitHub Pages and
 upload the ZIP as a release asset. In that case, set `REPOSITORY_URL` to the
 release asset directory, such as
-`https://github.com/OWNER/REPO/releases/download/v0.3.0`, and add the manifest's
+`https://github.com/OWNER/REPO/releases/download/v0.4.0`, and add the manifest's
 raw-content URL in Jellyfin. The manifest and ZIP can live at different hosts.
 
 The repository ZIP contains the DLL at its root; Jellyfin creates the versioned
@@ -65,10 +66,10 @@ python3 tools/package_plugin.py
 ```
 
 The ZIP and SHA-256 checksum are in `build/`. Stop Jellyfin before installing or
-updating the assembly. Extract `Jellyfin.Plugin.Playdate-0.3.0.zip` into the
+updating the assembly. Extract `Jellyfin.Plugin.Playdate-0.4.0.zip` into the
 server data directory's `plugins/` directory, then start Jellyfin. In the
 official Jellyfin container this is `/config/plugins/Playdate/`. The dashboard
-should list **Playdate 0.3.0.0** as active. No extra media mounts are needed: the
+should list **Playdate 0.4.0.0** as active. No extra media mounts are needed: the
 plugin reads files already accessible to Jellyfin.
 
 The build deliberately pins the server API version. Other Jellyfin versions
@@ -129,20 +130,26 @@ default audio track. `IMediaEncoder.EncoderPath` supplies Jellyfin's FFmpeg.
 Two bounded pipes produce monochrome video and mono MP3; `PdsEncoder` interleaves
 native packets on integer clocks. No full-video staging file is created.
 
-The Playdate requests short, numbered PDS segments. Each contains whole packets,
-at most 64 KiB, with an exact `Content-Length`. Concatenating them reproduces the
-continuous stream byte for byte. Segments normally contain one second of video;
-the encoder keeps one segment pending to identify the final response and queues
-at most two more. This adds about two seconds of initial server buffering, while
-keeping memory bounded and conversion progressive. The client uses one native
-player throughout; it advances only after that player has consumed every byte
-in the current response. `X-Pds-Final: 1` identifies the last segment.
+Client 0.4.0 requests numbered PDS segments containing up to eight seconds of
+video and at most 2 MiB, with whole packets and an exact `Content-Length`.
+Concatenating them reproduces the continuous stream byte for byte. Older clients
+retain the one-second, 64 KiB default. The encoder keeps one segment pending to
+identify the final response and queues at most two more. FFmpeg runs ahead until
+bounded buffers apply backpressure; it no longer waits for real time.
 
-This transport avoids HTTP chunk framing, which SDK 3.1.1's native player does
-not decode correctly. JSON and PDI responses also have known lengths. The client
-remains Lua-only and needs no C compiler or ARM toolchain. A normal reverse proxy
-can forward these endpoints; keep `Content-Length` and `X-Pds-Final` intact and
-do not transform the binary response. The plugin sends `no-store, no-transform`.
+The client initially buffers three seconds of video and keeps one native player
+throughout playback. It requests the next segment after the player has consumed
+every byte in the current response, preserving the connection where supported.
+`X-Pds-Final: 1` identifies the last segment. Decoded playback position travels
+with the next segment request, avoiding concurrent progress POSTs during video.
+Stopping sends the last decoded position and whether playback actually started.
+
+This transport avoids HTTP chunk framing, which the native player in SDKs
+3.1.1 and 3.1.2 did not decode correctly in our tests. JSON and PDI responses also
+have known lengths. The client remains Lua-only and needs no C compiler or ARM
+toolchain. A normal reverse proxy can forward these endpoints; keep
+`Content-Length` and `X-Pds-Final` intact and do not transform the binary response.
+The plugin sends `no-store, no-transform`.
 
 The plugin permits one active conversion at a time and binds playback sessions
 to the authenticated user and token. It checks permissions again before
@@ -166,12 +173,17 @@ URL, or user ID is accepted. Request bodies are limited to 4 KiB.
 | `GET /items?view=resume` | Continue watching |
 | `GET /items/{id}` | Details and poster revision |
 | `GET /items/{id}/poster.pdi` | Native 96×144 image |
-| `POST /play` | `{id, position}` → new playback session |
+| `POST /play` | `{id, position, segmentSeconds}` → new playback session; seconds is 1 (default) or 8 |
 | `GET /stream/{session}.pds` | Consume the session once |
-| `GET /stream/{session}/parts/{index}` | Sequential, length-delimited segments used by Playdate |
+| `GET /stream/{session}/parts/{index}?position=…` | Sequential segments; optional decoded playback position |
 | `GET /session/{session}` | Playback status |
 | `POST /session/{session}/progress` | `{position, paused}` |
-| `POST /session/{session}/stop` | `{position}`; idempotent stop |
+| `POST /session/{session}/stop` | `{position, started}`; idempotent stop |
+
+Playback sessions advertise `segmentSeconds`, `maxSegmentBytes`, and
+`progressInParts`. Segment requests validate the sequence before applying a
+reported position. `started` on stop allows saving progress when playback ends
+before the next segment request; an unplayed session does not create progress.
 
 Poster lookup uses primary art, falling back to a parent image when available.
 FFmpeg resizes, pads, and dithers it; C# writes an opaque native PDI. Each image
@@ -232,9 +244,9 @@ docker run -d --name jellyfin-playdate-proxy-test \
   -v "$PWD/tests/nginx.conf:/etc/nginx/conf.d/default.conf:ro" nginx:stable-alpine
 ```
 
-This tests a real local reverse proxy. It does not establish that the user's
-production Cloudflare configuration works; the plugin has not been installed
-on the live server.
+This tests a real local reverse proxy. Production authentication, browsing, and
+posters have also worked through Cloudflare. Version 0.4.0 playback still needs
+verification on the physical Playdate against that server.
 
 ## Scope
 
@@ -242,8 +254,9 @@ This version supports server-local finite video files, one conversion at a time,
 the default audio track, and primary posters. It does not yet support live TV,
 remote `.strm` sources, disc images, subtitles, an audio-track picker, or automatic
 next-episode playback. Video without audio gets a silent MP3 track for the native
-playback clock. Hardware and long Wi-Fi playback remain untested at the user's
-request; native streaming is an undocumented Playdate API.
+playback clock. Hardware testing exposed stalls with the earlier transport;
+the 0.4.0 change and long Wi-Fi playback await device verification. Native
+streaming is an undocumented Playdate API.
 
 See [the recorded validation results](PLUGIN-RESULTS.md).
 

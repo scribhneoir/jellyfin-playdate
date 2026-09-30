@@ -64,8 +64,9 @@ class PluginTests(unittest.TestCase):
         for user in self.users:
             self.api('/Users/' + user['Id'], method='DELETE')
 
-    def play(self, position=0, item=None):
-        job = self.api('/Playdate/api/play', {'id': (item or self.item)['id'], 'position': position})
+    def play(self, position=0, item=None, segment_seconds=1):
+        job = self.api('/Playdate/api/play', {'id': (item or self.item)['id'], 'position': position,
+            'segmentSeconds': segment_seconds})
         self.jobs.append(job)
         return job
 
@@ -105,6 +106,51 @@ class PluginTests(unittest.TestCase):
         self.assertStatus(400, '/Playdate/api/play', {'id': self.item['id'], 'position': -1})
         self.assertStatus(400, '/Playdate/api/play', {'id': self.item['id'], 'position': 99999})
         self.assertStatus(400, '/Playdate/api/play', {'id': 'http://example.com/file'})
+        for seconds in (0, 2, 99999):
+            self.assertStatus(400, '/Playdate/api/play', {'id': self.item['id'], 'segmentSeconds': seconds})
+
+    def test_buffered_segments_preserve_bytes_and_carry_decoded_progress(self):
+        before = self.api('/Playdate/api/items/' + self.item['id'])['resume']
+        job = self.play(segment_seconds=8)
+        self.assertEqual(8, job['segmentSeconds'])
+        self.assertEqual(2097152, job['maxSegmentBytes'])
+        self.assertTrue(job['progressInParts'])
+        path = '/Playdate' + job['parts']
+        started = time.monotonic()
+        with self.request(path + '/0') as response:
+            first = response.read()
+            self.assertEqual(len(first), int(response.headers['Content-Length']))
+            self.assertIsNone(response.headers.get('Transfer-Encoding'))
+            self.assertEqual('0', response.headers['X-Pds-Final'])
+        latency = time.monotonic() - started
+        self.assertLess(latency, 3.5, 'Buffered encoding still runs at playback speed')
+        self.assertGreater(len(first), 65536)
+        self.assertLessEqual(len(first), job['maxSegmentBytes'])
+        self.assertEqual(120, self.decode(first)[0])
+        self.assertEqual(before, self.api('/Playdate/api/items/' + self.item['id'])['resume'])
+        self.assertStatus(409, path + '/999?position=5')
+        self.assertStatus(400, path + '/1?position=-1')
+        self.assertEqual(before, self.api('/Playdate/api/items/' + self.item['id'])['resume'])
+        with self.request(path + '/1?position=4') as response:
+            last = response.read()
+            self.assertEqual(len(last), int(response.headers['Content-Length']))
+            self.assertEqual('1', response.headers['X-Pds-Final'])
+        self.assertAlmostEqual(4, self.api('/Playdate/api/items/' + self.item['id'])['resume'])
+        raw = first + last
+        self.assertEqual(180, self.decode(raw)[0])
+        self.api('/Playdate/api/session/' + job['id'] + '/stop', {'position': 4.5, 'started': True})
+        direct = self.play()
+        with self.request('/Playdate' + direct['path']) as response:
+            self.assertEqual(raw, response.read())
+        self.measurements.update(buffered_segment_seconds=round(latency, 3),
+            buffered_first_bytes=len(first), buffered_total_bytes=len(raw), piggyback_position=4)
+
+    def test_early_stop_reports_actual_playback_without_a_second_segment(self):
+        job = self.play(segment_seconds=8)
+        with self.request('/Playdate' + job['parts'] + '/0') as response:
+            response.read()
+        self.api('/Playdate/api/session/' + job['id'] + '/stop', {'position': 1.5, 'started': True})
+        self.assertAlmostEqual(1.5, self.api('/Playdate/api/items/' + self.item['id'])['resume'])
 
     def test_pdi_poster_matches_sdk_fixture(self):
         self.assertTrue(self.item['poster'])
@@ -147,7 +193,8 @@ class PluginTests(unittest.TestCase):
     def test_cancel_releases_encoder_and_session_ownership(self):
         job = self.play()
         other = self.user()
-        for path in ('/Playdate/api/session/' + job['id'], '/Playdate' + job['path']):
+        for path in ('/Playdate/api/session/' + job['id'], '/Playdate' + job['path'],
+                '/Playdate' + job['parts'] + '/0?position=4'):
             self.assertStatus(404, path, token=other)
         self.assertStatus(404, '/Playdate/api/session/' + job['id'] + '/stop', {'position': 0}, token=other)
         self.assertStatus(409, '/Playdate/api/play', {'id': self.item['id']})

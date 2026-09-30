@@ -13,7 +13,7 @@ public sealed class PdsException(int status, string message) : Exception(message
 }
 
 public sealed class PlaybackJob(Guid userId, string owner, string jellyfinSession, Guid itemId,
-    string sourceId, string source, int? audioIndex, double duration, double start)
+    string sourceId, string source, int? audioIndex, double duration, double start, int segmentSeconds = 1)
 {
     public string Id { get; } = Guid.NewGuid().ToString("N");
     public Guid UserId { get; } = userId;
@@ -25,6 +25,8 @@ public sealed class PlaybackJob(Guid userId, string owner, string jellyfinSessio
     public int? AudioIndex { get; } = audioIndex;
     public double Duration { get; } = duration;
     public double Start { get; } = start;
+    public int SegmentSeconds { get; } = segmentSeconds;
+    public int MaxSegmentBytes => SegmentSeconds == 1 ? 65536 : 2 * 1024 * 1024;
     public double Position { get; set; } = start;
     public CancellationTokenSource Cancel { get; } = new();
     public SemaphoreSlim ReportLock { get; } = new(1);
@@ -42,6 +44,7 @@ public sealed class PlaybackJob(Guid userId, string owner, string jellyfinSessio
     public long Bytes;
     public object Public() => new { id = Id, path = $"/api/stream/{Id}.pds", fps = PdsEncoder.Fps,
         parts = $"/api/stream/{Id}/parts",
+        segmentSeconds = SegmentSeconds, maxSegmentBytes = MaxSegmentBytes, progressInParts = true,
         start = Start, duration = Duration, state = State, bytes = Interlocked.Read(ref Bytes),
         error = Error, progressWarning = ProgressWarning };
 }
@@ -146,7 +149,7 @@ public sealed class PlaybackService(IMediaEncoder encoder, ISessionManager sessi
         finally { output.Dispose(); }
     }
 
-    public async Task<PdsPart?> Part(PlaybackJob job, int part, CancellationToken request)
+    public async Task<PdsPart?> Part(PlaybackJob job, int part, CancellationToken request, double? position = null)
     {
         if (!await job.PartLock.WaitAsync(0, request)) throw new PdsException(409, "A segment request is already active");
         using var cancel = CancellationTokenSource.CreateLinkedTokenSource(request, job.Cancel.Token);
@@ -154,10 +157,14 @@ public sealed class PlaybackService(IMediaEncoder encoder, ISessionManager sessi
         {
             if (part < 0 || part != job.NextPart || job.Cancel.IsCancellationRequested)
                 throw new PdsException(409, "Request the next video segment or start a new session");
+            // Progress belongs to a decoded frame, not to bytes encoded/downloaded.
+            // Carrying it with the next segment avoids concurrent device requests.
+            if (position.HasValue) await Report(job, position.Value, false);
+            else job.LastSeen = DateTime.UtcNow;
             if (job.Segments is null)
             {
                 if (job.State != "waiting") throw new PdsException(409, "This session already has a stream");
-                job.Segments = new PdsSegments();
+                job.Segments = new PdsSegments(PdsEncoder.Fps * job.SegmentSeconds, job.MaxSegmentBytes);
                 job.Producer = ProduceParts(job, job.Segments);
             }
             while (await job.Segments.Reader.WaitToReadAsync(cancel.Token))

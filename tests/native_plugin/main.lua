@@ -6,6 +6,7 @@ import 'player'
 import 'ui'
 
 local pd, gfx = playdate, playdate.graphics
+local mediaName = TEST_MEDIA_NAME or 'Diagnostic'
 local started = pd.getCurrentTimeMilliseconds()
 local phase, item, poster, lastState, result = 'start'
 local transitions = {}
@@ -22,10 +23,10 @@ function pd.update()
             Posters.configure(CLIENT_CONFIG)
             -- Force one download on every run, then verify the cached load.
             for _, name in ipairs(pd.file.listFiles('posters/') or {}) do pd.file.delete('posters/'..name) end
-            Net.request('GET','/api/items?search=Diagnostic',nil,function(data, failure)
+            Net.request('GET','/api/items?search='..Net.escape(mediaName),nil,function(data, failure)
                 fail(failure)
                 log('metadata received')
-                for _, entry in ipairs(data.items) do if entry.name=='Diagnostic' then item=entry end end
+                for _, entry in ipairs(data.items) do if entry.name==mediaName then item=entry end end
                 assert(item and item.poster ~= '', 'Missing test poster metadata')
                 Posters.load(item,function(image) poster=image;log('poster received') end)
                 phase='poster'
@@ -45,9 +46,19 @@ function pd.update()
             lastTrace=now
         end
         Player.update()
+        if Player.parts then
+            assert(Player.session.segmentSeconds==8 and Player.session.progressInParts,
+                'Plugin did not negotiate buffered segments with inline progress')
+            assert(not Net.active or not Net.active.path:match('/progress$'),
+                'Progress request overlapped the video transport')
+            for _, request in ipairs(Net.queue) do
+                assert(not request.path:match('/progress$'), 'Unexpected separate progress request')
+            end
+        end
         if phase=='full' and Player.stream then
             fullBytes=Player.stream:getBytesRead()
             finalFrame=Player.video:getCurrentFrame()
+            assert(Player.state~='buffering' or Player.closed, 'Video buffer ran dry between segments')
         end
         if Player.state ~= lastState then
             transitions[#transitions+1]={state=Player.state,phase=phase,position=Player.time()}
@@ -96,6 +107,7 @@ function pd.update()
             assert(Player.time()>=item.duration-.2, 'Full playback ended too early')
             finish(true,'Native PDI pixels/cache, video pixels, play, pause, resume, seek, stop, and complete segmented playback passed')
             result.bytes=fullBytes;result.finalFrame=finalFrame
+            result.fullPlaybackBufferUnderruns=0
         end
         if Player.item then UI.player(Player, nil, now+3000, now) end
         if pd.getCurrentTimeMilliseconds()-started > 90000 then error('Timeout in '..phase) end

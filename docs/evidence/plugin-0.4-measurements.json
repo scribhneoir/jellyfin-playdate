@@ -1,0 +1,14 @@
+{
+  "buffered_segment_seconds": 0.11,
+  "buffered_first_bytes": 201678,
+  "buffered_total_bytes": 303072,
+  "piggyback_position": 4,
+  "first_packet_seconds": 0.027,
+  "seek_video_frames": 60,
+  "audio_frames": 155,
+  "stream_bytes": 100975,
+  "saved_position": 9.5,
+  "first_segment_seconds": 0.03,
+  "segments": 5,
+  "segmented_bytes": 100975
+}

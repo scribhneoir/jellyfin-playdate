@@ -18,7 +18,7 @@ def main():
     try:
         jf = Jellyfin(read_env(args.env))
         jf.auth_base = ('MediaBrowser Client="Playdate Jellyfin", Device="Playdate", '
-                       'DeviceId="playdate-pds-client", Version="0.3.0"')
+                       'DeviceId="playdate-pds-client", Version="0.4.0"')
         jf.login()
         status = jf.request('/Playdate/api/status')
         if status.get('backend') != 'plugin':

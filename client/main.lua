@@ -242,3 +242,9 @@ function pd.gameWillTerminate()
     Net.cancelAll()
     if logFile then logFile:close(); logFile=nil end
 end
+
+function pd.serialMessageReceived(message)
+    if message == 'jf-status' then
+        print(json.encode(Player.lastDiagnostic or {current=Player.snapshot(), history=Player.history}))
+    end
+end

@@ -78,7 +78,7 @@ public sealed class PlaydateController(IUserManager users, ILibraryManager libra
 
     [HttpGet("status")]
     public IActionResult Status() => Reply(new { server = host.FriendlyName, version = host.ApplicationVersionString,
-        user = CurrentUser.Username, backend = "plugin", pluginVersion = "0.3.0", fps = PdsEncoder.Fps });
+        user = CurrentUser.Username, backend = "plugin", pluginVersion = "0.4.0", fps = PdsEncoder.Fps });
 
     [HttpGet("libraries")]
     public IActionResult Libraries()
@@ -133,13 +133,14 @@ public sealed class PlaydateController(IUserManager users, ILibraryManager libra
             throw new PdsException(403, "This account needs video playback and audio/video transcoding permission");
     }
 
-    public sealed record PlayRequest(Guid Id, double Position = 0);
-    public sealed record ProgressRequest(double Position, bool Paused = false);
+    public sealed record PlayRequest(Guid Id, double Position = 0, int SegmentSeconds = 1);
+    public sealed record ProgressRequest(double Position, bool Paused = false, bool Started = false);
 
     [HttpPost("play")]
     public async Task<IActionResult> Play([FromBody] PlayRequest request)
     {
         CheckPlayback();
+        if (request.SegmentSeconds is not (1 or 8)) throw new PdsException(400, "Choose one-second or eight-second segments");
         var item = Item(request.Id);
         if (item is not Video || item.GetPlayAccess(CurrentUser) != PlayAccess.Full)
             throw new PdsException(400, "Select a playable video");
@@ -155,7 +156,7 @@ public sealed class PlaydateController(IUserManager users, ILibraryManager libra
         var session = await sessions.GetSessionByAuthenticationToken(Claim("Token"), Claim("DeviceId"),
             HttpContext.Connection.RemoteIpAddress?.ToString() ?? "");
         var job = playback.Add(new PlaybackJob(CurrentUser.Id, Owner, session.Id, item.Id, source.Id,
-            source.Path, audio?.Index, duration, request.Position));
+            source.Path, audio?.Index, duration, request.Position, request.SegmentSeconds));
         return Reply(job.Public(), 201);
     }
 
@@ -176,6 +177,8 @@ public sealed class PlaydateController(IUserManager users, ILibraryManager libra
     public async Task<IActionResult> Stop(string id, [FromBody] ProgressRequest request)
     {
         var job = Job(id);
+        // Short videos and an early pause may finish before the next segment GET.
+        if (request.Started && !job.ReportedStart) await playback.Report(job, request.Position, false);
         await playback.Report(job, request.Position, true);
         return Reply(job.Public());
     }
@@ -195,15 +198,16 @@ public sealed class PlaydateController(IUserManager users, ILibraryManager libra
     }
 
     [HttpGet("stream/{id}/parts/{part:int}")]
-    public async Task<IActionResult> Part(string id, int part)
+    public async Task<IActionResult> Part(string id, int part, [FromQuery] double? position = null)
     {
         CheckPlayback();
         var job = Job(id);
         _ = Item(job.ItemId);
         Response.Headers.CacheControl = "no-store, no-transform";
-        var data = await playback.Part(job, part, HttpContext.RequestAborted);
+        var data = await playback.Part(job, part, HttpContext.RequestAborted, position);
         if (data is null) return NoContent();
         Response.Headers["X-Pds-Final"] = data.Final ? "1" : "0";
+        if (job.ProgressWarning.Length > 0) Response.Headers["X-Pds-Progress-Warning"] = job.ProgressWarning;
         return File(data.Data, "application/octet-stream");
     }
 }

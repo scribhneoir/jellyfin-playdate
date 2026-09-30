@@ -2,8 +2,9 @@
 
 Jellyfin **10.11.11**, .NET 9, Jellyfin FFmpeg 7.1.4, and Playdate Simulator
 **3.1.1** on x86_64 NixOS. The live server's public endpoint also reports
-10.11.11; all development and playback tests used an isolated local server
-with original generated media and a disposable account.
+10.11.11. The initial automated tests below used an isolated local server
+with original generated media and a disposable account. Subsequent production
+and hardware observations are recorded separately below.
 
 ## Results
 
@@ -47,12 +48,50 @@ Repository evidence: [catalog installation and restart](evidence/plugin-reposito
 ## Limits
 
 These checks establish local conversion, native decoding, controls, and ordinary
-reverse-proxy compatibility. They do not establish behavior through the user's
-production Cloudflare configuration, which has not had the plugin installed.
-Physical-device testing was skipped at the user's request. Long-running Wi-Fi,
-device memory/throughput, and instrumented A/V drift remain untested. Native PDS
+reverse-proxy compatibility. The plugin has since been installed on the production
+server; authentication, library browsing, and movie/show/season posters were
+verified there. Hardware playback now has a reproduced failure, described below.
+Long-running Wi-Fi, device memory/throughput, and instrumented A/V drift remain
+unverified. Native PDS
 playback uses an undocumented SDK API; future firmware compatibility is not
 guaranteed. The earlier user listening checks were for the original probe and
 bridge, not this plugin build.
+
+## Subsequent hardware investigation
+
+On Playdate OS 3.1.2, the 0.3.1 client with diagnostic counters consumed the first
+two segments (20,860 and 20,892 bytes), then issued the request for segment index
+2. That request produced no headers or additional decoder bytes before the
+30-second watchdog fired. The decoder reached frame 28, exhausted its buffered
+frames, and reported an audio underrun. This narrows the failure to obtaining
+the next segment; it does not establish whether connection reuse, concurrent
+progress requests, or another transport issue is responsible.
+
+The [device capture](evidence/device-segment-stall.json) includes no server token,
+media identifier, or session identifier. Simulator success does not validate
+this device behavior. Disabling separate progress POSTs allowed continuous
+playback on hardware, but the user reported buffering between one-second clips.
+The continuous chunked endpoint then failed on both hardware and SDK 3.1.2's
+Simulator. The Simulator's byte counters included HTTP chunk framing.
+
+## Version 0.4.0 change and checks
+
+The client now requests eight-second, length-delimited segments, buffers three
+seconds initially, and sends decoded progress with the next segment request.
+The server encodes ahead within bounded buffers. Both client and plugin must be
+upgraded. The client is compiled with SDK 3.1.2.
+
+The 14 encoder/bridge tests and 11 plugin integration tests passed. Integration
+checks cover eight-second segmentation, byte identity, progress carried with
+segments, early-stop progress, and invalid requests leaving progress unchanged.
+The first eight-second segment contained 201,678 bytes and arrived in 0.11 seconds
+on the isolated local fixture. These timings do not predict device Wi-Fi latency.
+
+Evidence: [14 unit checks](evidence/client-0.4-unit.log),
+[11 plugin checks](evidence/plugin-0.4-integration.log), and
+[measurements](evidence/plugin-0.4-measurements.json).
+
+Final native playback and hardware validation were deferred at the user's request
+to ship the candidate promptly. The 0.4.0 hardware fix is not yet confirmed.
 
 See [installation and API details](PLUGIN.md).

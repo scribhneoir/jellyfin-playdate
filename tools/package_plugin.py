@@ -71,7 +71,7 @@ def main():
             'checksum': hashlib.md5(archive.read_bytes(), usedforsecurity=False).hexdigest(),
             'timestamp': datetime.datetime.fromtimestamp(assembly.stat().st_mtime,
                 datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
-            'changelog': 'Native PDS streaming, playback progress, and cached PDI posters.',
+            'changelog': 'Eight-second buffered segments and playback progress carried with segment requests; update the client to 0.4.0.',
         }
         manifest = directory / 'manifest.json'
         manifest.write_text(json.dumps([dict(package_info, versions=[release])], indent=2) + '\n')

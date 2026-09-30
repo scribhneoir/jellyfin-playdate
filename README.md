@@ -23,7 +23,7 @@ also includes an unconfigured Playdate client ZIP. See
 
 For manual installation or a source build:
 
-1. Build with `make plugin-package`, or use `build/Jellyfin.Plugin.Playdate-0.3.0.zip`.
+1. Build with `make plugin-package`, or use `build/Jellyfin.Plugin.Playdate-0.4.0.zip`.
 2. Stop Jellyfin, extract the ZIP into its data directory's `plugins` folder,
    then start Jellyfin. The result is `plugins/Playdate/Jellyfin.Plugin.Playdate.dll`.
 3. Set `JELLYFIN_URL`, `JELLYFIN_USERNAME`, and `JELLYFIN_PASSWORD` in your private
@@ -38,8 +38,9 @@ transcoding permissions.
 
 The user verified all twelve diagnostic beeps lined up with the flashes in the
 Simulator, then confirmed picture and audio from a real Jellyfin video.
-Physical-device testing was skipped at the user's request. The native streaming
-API is undocumented; this is an early personal-use client, not an official
+Hardware testing found a stall when progress requests overlapped video requests.
+Client 0.4.0 requires plugin 0.4.0 and changes that transport; its hardware
+playback check is pending. The native streaming API is undocumented; this is an early personal-use client, not an official
 Jellyfin or Panic application.
 
 ## What works
@@ -94,7 +95,7 @@ nix develop path:. --command make client-package
 nix develop path:. --command PlaydateSimulator build/Jellyfin.pdx
 ```
 
-The pinned Nix environment supplies SDK 3.1.1. Docker includes Python and FFmpeg,
+The pinned Nix environment supplies SDK 3.1.2. Docker includes Python and FFmpeg,
 without SDK binaries. The packaged app is `build/Jellyfin.zip`.
 
 `make up` runs `docker compose --env-file /dev/null up --build -d bridge`.
@@ -120,9 +121,10 @@ seek release the current stream; resuming starts a new conversion at the decoded
 playback position. This avoids filling the device's memory during a long pause.
 Expect a short buffering interval when resuming or seeking.
 
-The client reports the decoded frame position every ten seconds and when you
-stop. It does not infer watched progress from bytes downloaded. Abrupt exits can
-resume up to about ten seconds earlier. If the bridge cannot save progress, the
+The plugin client reports decoded playback position with subsequent segment
+requests and when you stop. The bridge client reports every ten seconds and on
+stop. Neither infers watched progress from bytes downloaded. Abrupt exits can
+lose progress since the last report. If the bridge cannot save progress, the
 client displays a warning. A disconnected client is eventually removed from
 Jellyfin's active playback sessions using its last reported position.
 
@@ -185,7 +187,8 @@ Use the probe arguments `host=127.0.0.1 port=8001` for its HTTP stream.
 
 ## Current limits
 
-Physical Playdate performance and long-running Wi-Fi playback remain untested.
+The 0.4.0 transport change awaits hardware playback verification; long-running
+Wi-Fi playback and device performance remain unverified.
 This version selects Jellyfin's default audio track; it has no subtitle overlay,
 track picker, live TV, offline downloads, or automatic next episode. Posters are
 available in plugin mode. The plugin reads finite video files on the Jellyfin

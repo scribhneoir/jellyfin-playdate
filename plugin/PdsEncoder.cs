@@ -68,7 +68,9 @@ public static class PdsEncoder
         double duration, Stream output, Action<int> countBytes, CancellationToken token)
     {
         var interval = duration.ToString("R", CultureInfo.InvariantCulture);
-        string[] input = ["-nostdin", "-v", "error", "-threads", "2", "-re", "-ss",
+        // The bounded segment queue and response backpressure limit read-ahead.
+        // Encoding ahead lets the device refill its buffer between HTTP requests.
+        string[] input = ["-nostdin", "-v", "error", "-threads", "2", "-ss",
             start.ToString("R", CultureInfo.InvariantCulture), "-i", source];
         string[] video = [..input, "-map", "0:v:0", "-an", "-threads", "2", "-filter_threads", "1", "-vf",
             $"fps={Fps}:start_time=0,scale=400:240:force_original_aspect_ratio=decrease,pad=400:240:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,format=gray",
