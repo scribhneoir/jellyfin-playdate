@@ -39,8 +39,8 @@ transcoding permissions.
 The user verified all twelve diagnostic beeps lined up with the flashes in the
 Simulator, then confirmed picture and audio from a real Jellyfin video.
 Hardware testing found a stall when progress requests overlapped video requests.
-Client 0.4.0 requires plugin 0.4.0 and changes that transport; its hardware
-playback check is pending. The native streaming API is undocumented; this is an early personal-use client, not an official
+Client 0.4.x requires plugin 0.4.0. Hardware playback still stalled with 0.4.1;
+client 0.4.2 increases the receive buffer and awaits a device check. The native streaming API is undocumented; this is an early personal-use client, not an official
 Jellyfin or Panic application.
 
 ## What works
@@ -187,7 +187,7 @@ Use the probe arguments `host=127.0.0.1 port=8001` for its HTTP stream.
 
 ## Current limits
 
-The 0.4.0 transport change awaits hardware playback verification; long-running
+The 0.4.2 receive-buffer change awaits hardware playback verification; long-running
 Wi-Fi playback and device performance remain unverified.
 This version selects Jellyfin's default audio track; it has no subtitle overlay,
 track picker, live TV, offline downloads, or automatic next episode. Posters are

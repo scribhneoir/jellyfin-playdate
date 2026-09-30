@@ -37,7 +37,7 @@ end
 
 function Net.headers()
     if Net.config.backend == 'plugin' then
-        return { ['X-Emby-Authorization'] = 'MediaBrowser Client="Playdate Jellyfin", Device="Playdate", DeviceId="playdate-pds-client", Version="0.4.1", Token="'..Net.config.token..'"',
+        return { ['X-Emby-Authorization'] = 'MediaBrowser Client="Playdate Jellyfin", Device="Playdate", DeviceId="playdate-pds-client", Version="0.4.2", Token="'..Net.config.token..'"',
             ['Content-Type'] = 'application/json', Connection = 'close' }
     end
     return { Authorization = 'Bearer '..Net.config.token, ['Content-Type'] = 'application/json' }

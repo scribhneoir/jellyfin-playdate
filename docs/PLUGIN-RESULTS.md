@@ -113,4 +113,23 @@ eight-second segments, the same native player, and progress in segment requests.
 Plugin 0.4.0 remains compatible. This is a candidate change: client compilation
 and package checks were performed, but its hardware playback is not yet verified.
 
+## Version 0.4.1 hardware result and 0.4.2 candidate
+
+The user reported another failure after roughly 20 seconds. A captured retry
+failed within the first segment: 299,517 bytes were advertised, but the decoder
+stopped at 286,648 bytes, frame 114, with zero available or buffered bytes. The
+30-second watchdog then fired. No later segment request or concurrent control
+request had occurred. Connection reuse therefore cannot be the sole cause.
+
+[Device evidence](evidence/device-0.4.1-stall.json) contains the first request,
+headers, and final failure. The missing 12,869 bytes suggest investigating the
+receive path for responses larger than the previous 64 KiB socket buffer; this
+is an inference, not a confirmed SDK defect.
+
+Client 0.4.2 allocates a receive buffer matching the server's segment-size limit
+(2 MiB for eight-second segments, validated and capped before allocation). It
+also records HTTP completion and peer-close events to distinguish transport
+closure from a stalled byte counter. Plugin 0.4.0 remains compatible. Compilation
+and package checks passed; device playback of this candidate remains unverified.
+
 See [installation and API details](PLUGIN.md).

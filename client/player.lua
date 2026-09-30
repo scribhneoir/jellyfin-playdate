@@ -14,6 +14,8 @@ function Player.snapshot()
         controlPending=Net.active ~= nil,
         controlProgress=Net.active and Net.active.path:match('/progress$') ~= nil,
         part=parts.index, base=parts.base, expected=parts.expected, final=parts.final,
+        responseComplete=parts.responseComplete, peerClosed=parts.peerClosed,
+        receiveBuffer=Player.receiveBuffer,
         closed=Player.closed, received=received, length=length,
         available=inspect(Player.connection, 'getBytesAvailable'),
         networkError=inspect(Player.connection, 'getError'),
@@ -115,6 +117,7 @@ local function getPart()
     local parts = Player.parts
     parts.base = Player.stream:getBytesRead()
     parts.expected, parts.nextAt, parts.final = nil, nil, false
+    parts.responseComplete, parts.peerClosed = false, false
     local path = Net.config.base..parts.path..'/'..parts.index
     if Player.started and Player.session.progressInParts then
         path = path..'?position='..Net.escape(Player.time())
@@ -138,6 +141,10 @@ local function connect(session)
     assert(type(maxBytes) == 'number' and maxBytes > 0 and maxBytes <= 2097152 and maxBytes % 1 == 0,
         'Invalid video segment limit')
     Player.connection = Net.connection()
+    -- Large segments can arrive in a burst. Reserve room for the entire
+    -- advertised segment while the native decoder drains the socket.
+    Player.receiveBuffer = Player.parts and maxBytes or 65536
+    Player.connection:setReadBufferSize(Player.receiveBuffer)
     Player.connection:setHeadersReadCallback(function()
         local status = Player.connection:getResponseStatus()
         if status ~= 200 then Player.pendingError = 'Cannot start video (HTTP '..tostring(status)..')'; return end
@@ -155,7 +162,14 @@ local function connect(session)
             trace('headers')
         end
     end)
-    if not Player.parts then Player.connection:setConnectionClosedCallback(function() Player.closed = true end) end
+    Player.connection:setRequestCompleteCallback(function()
+        if Player.parts then Player.parts.responseComplete=true; trace('response-complete') end
+    end)
+    Player.connection:setConnectionClosedCallback(function()
+        if Player.parts then
+            if Player.parts.expected then Player.parts.peerClosed=true; trace('peer-closed') end
+        else Player.closed=true end
+    end)
     attachStream()
     if Player.parts then getPart()
     else
@@ -223,8 +237,7 @@ function Player.update()
         if parts then
             -- The decoder can finish a response before Lua's completion callback.
             -- Wait until the decoder has consumed the body before the next GET.
-            -- Reset HTTP/TCP state between responses. Reusing a live connection
-            -- on hardware can leave the decoder short of the next body's length.
+            -- Reset HTTP/TCP state between responses once their bodies are drained.
             if parts.expected and Player.stream:getBytesRead() >= parts.expected then
                 assert(Player.stream:getBytesRead() == parts.expected, 'Video segment length mismatch')
                 trace('consumed')

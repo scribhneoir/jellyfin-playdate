@@ -140,7 +140,9 @@ bounded buffers apply backpressure; it no longer waits for real time.
 The client initially buffers three seconds of video and keeps one native player
 throughout playback. It requests the next segment after the player has consumed
 every byte in the current response. Client 0.4.1 closes and reopens the connection
-between segments to reset HTTP/TCP state; this change awaits hardware validation.
+between segments to reset HTTP/TCP state. This did not resolve hardware stalls.
+Client 0.4.2 also reserves a receive buffer for the full segment (at most 2 MiB);
+its hardware playback check is pending.
 `X-Pds-Final: 1` identifies the last segment. Decoded playback position travels
 with the next segment request, avoiding concurrent progress POSTs during video.
 Stopping sends the last decoded position and whether playback actually started.
